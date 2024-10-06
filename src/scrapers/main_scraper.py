@@ -9,7 +9,7 @@ import logging
 import time
 
 def scrape_femicide_data(page_url: str) -> pd.DataFrame:
-    log_filename = f'./src/scrapers/logs/anit_sayac_scraper_{datetime.datetime.now().strftime("%Y%m%d%H%M%S")}.log'
+    log_filename = f'./logs/anit_sayac_scraper_{datetime.datetime.now().strftime("%Y%m%d%H%M%S")}.log'
     logging.basicConfig(filename=log_filename, level=logging.INFO,
                         format='%(asctime)s - %(levelname)s - %(message)s')
 
