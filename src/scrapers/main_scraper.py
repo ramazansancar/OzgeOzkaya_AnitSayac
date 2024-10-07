@@ -8,13 +8,18 @@ import datetime
 import logging
 import time
 
-def scrape_femicide_data(page_url: str) -> pd.DataFrame:
-    log_filename = f'./logs/anit_sayac_scraper_{datetime.datetime.now().strftime("%Y%m%d%H%M%S")}.log'
-    logging.basicConfig(filename=log_filename, level=logging.INFO,
-                        format='%(asctime)s - %(levelname)s - %(message)s')
+chrome_options = webdriver.ChromeOptions()
+chrome_options.add_argument('--headless') # Run the browser in background
+chrome_options.add_argument('--disable-dev-shm-usage') # Overcome limited resource problems
+chrome_options.add_experimental_option('excludeSwitches', ['enable-logging']) # Disable logging
+chrome_options.add_argument('---log-level=3') # Disable logging
 
-    driver = webdriver.Chrome()
-    wait = WebDriverWait(driver, 10)
+def scrape_femicide_data(page_url: str) -> pd.DataFrame:
+    log_filename = f'./src/scrapers/logs/anit_sayac_scraper_{datetime.datetime.now().strftime("%Y%m%d%H%M%S")}.log'
+    logging.basicConfig(filename=log_filename, encoding='utf-8', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+    driver = webdriver.Chrome(options=chrome_options)
+    wait = WebDriverWait(driver, 30)
 
     try:
         driver.get(page_url)
@@ -26,14 +31,17 @@ def scrape_femicide_data(page_url: str) -> pd.DataFrame:
             elements = wait.until(EC.visibility_of_all_elements_located((By.XPATH, './/span[contains(@class, "xxy")]')))
             logging.info(f"Scraped all individuals listed in the website. Total: {len(elements)}")
             for individual in elements:
-                time.sleep(2)
+                #time.sleep(2)
                 anchor = individual.find_element(By.XPATH, './/a[@class="html5lightbox"]')
 
                 name = anchor.text
 
                 href = anchor.get_attribute('href')
-                driver_detail = webdriver.Chrome()
-                wait = WebDriverWait(driver_detail, 10)
+
+                item_id = href.split('=')[1]
+
+                driver_detail = webdriver.Chrome(options=chrome_options)
+                wait = WebDriverWait(driver_detail, 30)
                 driver_detail.get(href)
                 logging.info(f"Connected to scrape {name} details. RIP...")
 
@@ -43,6 +51,7 @@ def scrape_femicide_data(page_url: str) -> pd.DataFrame:
                 img_src = driver_detail.find_element(By.TAG_NAME, 'img').get_attribute("src")
 
                 incident_data = {
+                    'ID': item_id,
                     'Name': name,
                     'Tarih': "",
                     'Maktülün yaşı': "",
@@ -81,9 +90,10 @@ def scrape_femicide_data(page_url: str) -> pd.DataFrame:
 
                 driver_detail.quit()
                 logging.info(f"Successfully scraped {name} details. RIP...")
+                print(f'[{item_id}] Successfully scraped {name} details. RIP...')
 
-                femicide_data = pd.DataFrame(records)
-                femicide_data.to_csv("./data/raw/anitsayac_data_all_raw.csv", index=False)
+            femicide_data = pd.DataFrame(records)
+            femicide_data.to_csv("./data/raw/anitsayac_data_all_raw.csv", index=False)
 
             logging.info("Scraping completed successfully")
 

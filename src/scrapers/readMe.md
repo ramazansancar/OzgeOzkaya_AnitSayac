@@ -3,11 +3,11 @@
 ## Install
 
 ```bash
-pip install -r requirements.txt
+pip install -r src/scrapers/requirements.txt
 ```
 
 ## Run
 
 ```bash
-python main_scraper.py
+python src/scrapers/main_scraper.py
 ```
